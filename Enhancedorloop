@@ -1,0 +1,39 @@
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import java.util.List;
+
+public class WebTableExample {
+    public static void main(String[] args) {
+        // Set the path for the ChromeDriver
+        System.setProperty("webdriver.chrome.driver", "path/to/chromedriver");
+
+        // Initialize WebDriver
+        WebDriver driver = new ChromeDriver();
+        
+        // Navigate to the web page containing the table
+        driver.get("http://example.com/tablepage");
+
+        // Locate the table element
+        WebElement table = driver.findElement(By.id("tableId"));
+
+        // Get all rows from the table
+        List<WebElement> rows = table.findElements(By.tagName("tr"));
+
+        // Iterate through each row
+        for (WebElement row : rows) {
+            // Get all cells in the row
+            List<WebElement> cells = row.findElements(By.tagName("td"));
+            
+            // Process each cell
+            for (WebElement cell : cells) {
+                System.out.print(cell.getText() + "\t");
+            }
+            System.out.println();
+        }
+        
+        // Close the driver
+        driver.quit();
+    }
+}
