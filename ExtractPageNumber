@@ -1,0 +1,132 @@
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ExtractPageNumber {
+    public static void main(String[] args) {
+        String text = "Page 8 of 10"; // Example text containing the page number
+        Pattern pattern = Pattern.compile("\\b\\d+\\b");
+        Matcher matcher = pattern.matcher(text);
+
+        if (matcher.find()) {
+            int pageNumber = Integer.parseInt(matcher.group());
+            System.out.println("Page number: " + pageNumber);
+        } else {
+            System.out.println("No page number found.");
+        }
+    }
+}
+
+
+
+
+
+
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+//<span class="page-number">Page 8 of 10</span>
+
+public class ExtractPageNumber {
+    public static void main(String[] args) {
+        WebDriver driver = new ChromeDriver();
+        driver.get("URL_OF_THE_PAGE");
+
+        // Locate the element containing the page number
+        WebElement pageNumberElement = driver.findElement(By.xpath("//span[contains(text(), 'Page')]"));
+        String text = pageNumberElement.getText();
+
+        // Use regular expression to extract the integer
+        Pattern pattern = Pattern.compile("\\b\\d+\\b");
+        Matcher matcher = pattern.matcher(text);
+
+        if (matcher.find()) {
+            int pageNumber = Integer.parseInt(matcher.group());
+            System.out.println("Page number: " + pageNumber);
+        } else {
+            System.out.println("No page number found.");
+        }
+
+        driver.quit();
+    }
+}
+
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class PageNumberExtractor {
+
+    /**
+     * Extracts the page number from an element located by the provided XPath.
+     *
+     * @param driver The WebDriver instance.
+     * @param xpath The XPath to locate the element containing the page number.
+     * @return The extracted page number, or -1 if not found.
+     */
+    public static int extractPageNumber(WebDriver driver, String xpath) {
+        try {
+            // Locate the element containing the page number using XPath
+            WebElement pageNumberElement = driver.findElement(By.xpath(xpath));
+            String text = pageNumberElement.getText();
+
+            // Use regular expression to extract the integer
+            Pattern pattern = Pattern.compile("\\b\\d+\\b");
+            Matcher matcher = pattern.matcher(text);
+
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group());
+            } else {
+                System.out.println("No page number found in the text: " + text);
+                return -1;
+            }
+        } catch (Exception e) {
+            System.out.println("Error extracting page number: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    public static void main(String[] args) {
+        WebDriver driver = new ChromeDriver();
+        driver.get("URL_OF_THE_PAGE");
+
+        String xpath = "//span[contains(text(), 'Page')]"; // Example XPath
+        int pageNumber = extractPageNumber(driver, xpath);
+
+        System.out.println("Extracted page number: " + pageNumber);
+
+        driver.quit();
+    }
+}
+
+Explanation of the Generic Function:
+Method Signature:
+
+extractPageNumber(WebDriver driver, String xpath): A static method that takes a WebDriver instance and an XPath string as parameters. It returns the extracted page number as an int.
+Element Location:
+
+Uses driver.findElement(By.xpath(xpath)) to locate the element containing the page number.
+Text Extraction:
+
+Retrieves the text from the located element using getText().
+Regular Expression:
+
+Uses a regular expression (\\b\\d+\\b) to find the first occurrence of a number in the element's text.
+Number Parsing:
+
+If a match is found, it parses the number from the matched group and returns it.
+If no match is found or if an error occurs, it prints an appropriate message and returns -1.
+Main Method:
+
+Demonstrates the usage of the extractPageNumber method.
+Initializes a WebDriver instance, navigates to a URL, and extracts the page number using a provided XPath.
+Prints the extracted page number and quits the driver.
+This generic function can be used in various contexts by simply changing the XPath to match the specific element containing the page number on different pages.
