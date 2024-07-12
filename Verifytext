@@ -1,0 +1,65 @@
+/**
+ * Checks if a WebElement is visible. First tries with isDisplayed() method,
+ * and if that fails, attempts to check visibility using JavaScript. If the
+ * element is visible, it also verifies if the element's text matches the specified text.
+ *
+ * @param element the WebElement to check visibility and text for
+ * @param textToVerify the text to verify against the element's text
+ * @return true if the element is visible and the text matches, false otherwise
+ */
+public boolean isElementVisibleAndVerifyText(WebElement element, String textToVerify) {
+    boolean isVisible = false;
+
+    try {
+        // Check if the element is visible using isDisplayed()
+        if (element.isDisplayed()) {
+            Log.info("Element is visible: " + element);
+            isVisible = true;
+        }
+    } catch (Exception e) {
+        // Log if isDisplayed() fails
+        Log.info("Element is not visible using isDisplayed(): " + e.getMessage());
+    }
+
+    if (!isVisible) {
+        try {
+            // If isDisplayed() fails, try using JavaScript to check visibility
+            JavascriptExecutor jse = (JavascriptExecutor) webDriverManager.getDriver();
+            Boolean isVisibleJS = (Boolean) jse.executeScript(
+                "var elem = arguments[0];" +
+                "var style = window.getComputedStyle(elem);" +
+                "return (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0');", 
+                element
+            );
+
+            // Check if the JavaScript execution returned true for visibility
+            if (isVisibleJS != null && isVisibleJS) {
+                Log.info("Element is visible using JavaScript: " + element);
+                isVisible = true;
+            }
+        } catch (Exception e) {
+            // Log if JavaScript execution fails
+            Log.info("Element is not visible using JavaScript: " + e.getMessage());
+        }
+    }
+
+    if (isVisible) {
+        try {
+            // Verify if the element's text matches the specified text
+            String elementText = element.getText();
+            if (elementText.contains(textToVerify)) {
+                Log.info(textToVerify + " displayed --> " + elementText);
+                return true;
+            } else {
+                Log.info("Text does not match. Expected: " + textToVerify + ", Actual: " + elementText);
+                return false;
+            }
+        } catch (Exception e) {
+            // Log if getting the text fails
+            Log.info("Unable to retrieve text from the element: " + e.getMessage());
+        }
+    }
+
+    Log.info("Element is not visible or text does not match: " + element);
+    return false;
+}
