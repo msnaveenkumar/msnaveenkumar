@@ -1,0 +1,44 @@
+
+/**
+ * Checks if a WebElement is visible. First tries with isDisplayed() method,
+ * and if that fails, attempts to check visibility using JavaScript.
+ *
+ * @param element the WebElement to check visibility for
+ * @return true if the element is visible, false otherwise
+ */
+public boolean isElementVisible(WebElement element) {
+    try {
+        // Check if the element is visible using isDisplayed()
+        if (element.isDisplayed()) {
+            Log.info("Element is visible: " + element);
+            return true;
+        }
+    } catch (Exception e) {
+        // Log if isDisplayed() fails
+        Log.info("Element is not visible using isDisplayed(): " + e.getMessage());
+    }
+
+    try {
+        // If isDisplayed() fails, try using JavaScript to check visibility
+        JavascriptExecutor jse = (JavascriptExecutor) webDriverManager.getDriver();
+        Boolean isVisible = (Boolean) jse.executeScript(
+            "var elem = arguments[0];" +
+            "var style = window.getComputedStyle(elem);" +
+            "return (style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0');", 
+            element
+        );
+
+        // Check if the JavaScript execution returned true for visibility
+        if (isVisible != null && isVisible) {
+            Log.info("Element is visible using JavaScript: " + element);
+            return true;
+        }
+    } catch (Exception e) {
+        // Log if JavaScript execution fails
+        Log.info("Element is not visible using JavaScript: " + e.getMessage());
+    }
+
+    // Log if the element is not visible by any method
+    Log.info("Element is not visible: " + element);
+    return false;
+}
