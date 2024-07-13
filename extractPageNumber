@@ -1,0 +1,50 @@
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class PageNumberExtractor {
+
+    /**
+     * Extracts the page number from an element located by the provided XPath.
+     *
+     * @param driver The WebDriver instance.
+     * @param xpath The XPath to locate the element containing the page number.
+     * @return The extracted page number, or -1 if not found.
+     */
+    public static int extractPageNumber(WebDriver driver, String xpath) {
+        try {
+            // Locate the element containing the page number using XPath
+            WebElement pageNumberElement = driver.findElement(By.xpath(xpath));
+            String text = pageNumberElement.getText();
+
+            // Use regular expression to extract the integer
+            Pattern pattern = Pattern.compile("\\b\\d+\\b");
+            Matcher matcher = pattern.matcher(text);
+
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group());
+            } else {
+                System.out.println("No page number found in the text: " + text);
+                return -1;
+            }
+        } catch (Exception e) {
+            System.out.println("Error extracting page number: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    public static void main(String[] args) {
+        WebDriver driver = new ChromeDriver();
+        driver.get("URL_OF_THE_PAGE");
+
+        String xpath = "//span[contains(text(), 'Page')]"; // Example XPath
+        int pageNumber = extractPageNumber(driver, xpath);
+
+        System.out.println("Extracted page number: " + pageNumber);
+
+        driver.quit();
+    }
+}
