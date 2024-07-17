@@ -1,0 +1,25 @@
+Sure, here's a draft email:
+
+---
+
+Subject: **Scheduled Reviews and Sub-Task Creation for QA Deployment**
+
+Hi Team,
+
+To ensure the quality and stability of our code before it reaches the QA environment, we are implementing a new process. Please follow the steps below before pushing any code into QA:
+
+1. **Peer Developer Review**: Schedule a meeting for a peer review with another developer.
+2. **QA Review**: Schedule a review session with a QA team member.
+3. **BA Review**: Schedule a review session with a Business Analyst.
+
+Additionally, each team member should create sub-tasks in Jira for these review sessions. This will help us track progress and ensure that all necessary steps are completed.
+
+Thank you for your cooperation in maintaining the quality of our code.
+
+Best regards,
+
+[Your Name]
+
+---
+
+Feel free to modify this as needed!
