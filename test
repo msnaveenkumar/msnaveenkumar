@@ -1,1 +1,97 @@
+package com.qmetry.qaf.example.test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
+
+public class Final2 {
+
+    public static void main(String[] args) {
+        try {
+            // Path to the JSON file
+            File jsonFile = new File("test.json");
+
+            // Parse the JSON file
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(jsonFile);
+
+            // Traverse and process items within "datasets"
+            JsonNode datasetsNode = rootNode.get("datasets");
+            if (datasetsNode != null && datasetsNode.isArray()) {
+                for (JsonNode dataset : datasetsNode) {
+                    System.out.println("Dataset Name: " + dataset.get("name").asText());
+
+                    // Example of how to use the methods
+                    int reportsCount = countItems(dataset, "reports");
+                    int boundariesCount = countItems(dataset, "boundaries");
+                    int dgcDataDomainsCount = countItems(dataset, "dgcDataDomains");
+                    int datasetElementsCount = countItems(dataset, "datasetElements");
+                    int upstreamDatasetsCount = countItems(dataset, "upstreamDatasets");
+                    int systemDataElementsCount = countItems(dataset, "systemDataElements");
+                    int nameCount = countItems(dataset, "name");
+                    int formatCount = countItems(dataset, "format");
+                    int descriptionCount = countItems(dataset, "description");
+                    int systemKeyCount = countItemsNested(dataset, "systemKey", "systemDataElements");
+
+                    System.out.println("Reports Count: " + reportsCount);
+                    System.out.println("Boundaries Count: " + boundariesCount);
+                    System.out.println("DgcDataDomains Count: " + dgcDataDomainsCount);
+                    System.out.println("DatasetElements Count: " + datasetElementsCount);
+                    System.out.println("UpstreamDatasets Count: " + upstreamDatasetsCount);
+                    System.out.println("SystemDataElements Count: " + systemDataElementsCount);
+                    System.out.println("Name Count: " + nameCount);
+                    System.out.println("Format Count: " + formatCount);
+                    System.out.println("Description Count: " + descriptionCount);
+                    System.out.println("SystemKey Count in SystemDataElements: " + systemKeyCount);
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to count items in a given field
+    public static int countItems(JsonNode node, String fieldName) {
+        return countFieldOccurrences(node, fieldName);
+    }
+
+    // Method to count occurrences of a specific field in a JSON node
+    private static int countFieldOccurrences(JsonNode node, String fieldName) {
+        if (node == null) {
+            return 0;
+        }
+
+        int count = 0;
+
+        if (node.isArray()) {
+            for (JsonNode item : node) {
+                count += countFieldOccurrences(item, fieldName);
+            }
+        } else if (node.isObject()) {
+            if (node.has(fieldName)) {
+                count += 1;  // Field found, count it
+            }
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                count += countFieldOccurrences(field.getValue(), fieldName);
+            }
+        }
+
+        return count;
+    }
+
+    // Method to count items of a specific field within nested nodes
+    public static int countItemsNested(JsonNode rootNode, String fieldName, String nestedNodeName) {
+        JsonNode nestedNode = rootNode.get(nestedNodeName);
+        if (nestedNode != null) {
+            return countFieldOccurrences(nestedNode, fieldName);
+        }
+        return 0;
+    }
+}
