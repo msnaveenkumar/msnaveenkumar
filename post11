@@ -1,0 +1,66 @@
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.builder.RequestSpecBuilder;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class ApiClient {
+
+    // Method to build the base request
+    private static RequestSpecification buildBaseRequest(String baseUrl) {
+        return new RequestSpecBuilder()
+                .setBaseUri(baseUrl)
+                .addHeader("Content-Type", "application/json")
+                .build();
+    }
+
+    // Generic GET method
+    public static Response sendGetRequest(String baseUrl, String route, LinkedHashMap<String, String> pathParams) {
+        RequestSpecification request = buildBaseRequest(baseUrl);
+        
+        // Build the complete URL with path parameters
+        for (Map.Entry<String, String> entry : pathParams.entrySet()) {
+            route = route.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+
+        return request.get(route);
+    }
+
+    // Generic POST method
+    public static Response sendPostRequest(String baseUrl, String route, LinkedHashMap<String, String> pathParams, Object body) {
+        RequestSpecification request = buildBaseRequest(baseUrl);
+        request.body(body);
+
+        // Build the complete URL with path parameters
+        for (Map.Entry<String, String> entry : pathParams.entrySet()) {
+            route = route.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+
+        return request.post(route);
+    }
+
+    // Usage example
+    public static void main(String[] args) {
+        // Base URL
+        String baseUrl = "https://api.example.com";
+
+        // Example for GET request
+        LinkedHashMap<String, String> getPathParams = new LinkedHashMap<>();
+        getPathParams.put("eonId", "66005");
+        String getRoute = "/fdc/conceptUsage/transformation/{eonId}/lightweight";
+        Response getResponse = sendGetRequest(baseUrl, getRoute, getPathParams);
+        System.out.println("GET Response: " + getResponse.getBody().asString());
+
+        // Example for POST request
+        LinkedHashMap<String, String> postPathParams = new LinkedHashMap<>();
+        postPathParams.put("eonId", "66005");
+        String postRoute = "/casc/upload/multiple/cascManifests/system/{eonId}";
+        Map<String, Object> postBody = new LinkedHashMap<>();
+        postBody.put("uploadType", "UPLOAD_AND_WAIT_FOR_VALIDATION_ONLY");
+        postBody.put("dryRunTimeoutMins", 5);
+        postBody.put("casCManifestsPath", "casCManifestsPath");
+        Response postResponse = sendPostRequest(baseUrl, postRoute, postPathParams, postBody);
+        System.out.println("POST Response: " + postResponse.getBody().asString());
+    }
+}
