@@ -1,0 +1,63 @@
+import io.restassured.response.Response;
+import java.util.LinkedHashMap;
+
+public class ApiExample {
+
+    public static void main(String[] args) {
+        // Base URL of the API
+        String baseUrl = "https://api.example.com";
+        
+        // Specific route of the API endpoint
+        String route = "/users";
+        
+        // Path parameters
+        LinkedHashMap<String, String> pathParams = new LinkedHashMap<>();
+        pathParams.put("userId", "12345");
+        
+        // Request body (User details in this case)
+        String requestBody = "{\n" +
+                "  \"name\": \"John Doe\",\n" +
+                "  \"email\": \"johndoe@example.com\",\n" +
+                "  \"age\": 30\n" +
+                "}";
+
+        // Sending POST request
+        Response response = postServiceWithParamsInPath(baseUrl, route, pathParams, requestBody);
+        
+        // Printing the response
+        System.out.println("Response Status Code: " + response.getStatusCode());
+        System.out.println("Response Body: " + response.getBody().asString());
+    }
+
+    /**
+     * Sends a POST request to the specified URL with the provided path parameters and returns the response.
+     *
+     * @param baseUrl The base URL for the service.
+     * @param route The specific route of the service.
+     * @param pathParams A LinkedHashMap of path parameters where the key is the parameter name and the value is the parameter value.
+     * @param body The request body to be sent in the POST request.
+     * @return The response from the service as a Response object.
+     */
+    public static Response postServiceWithParamsInPath(String baseUrl, String route, LinkedHashMap<String, String> pathParams, Object body) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl);
+        builder.path(route);
+
+        for (Map.Entry<String, String> entry : pathParams.entrySet()) {
+            builder.pathSegment(entry.getValue());
+        }
+
+        RequestSpecification request = buildBaseRequest(baseUrl);
+        request.body(body);
+        
+        Response response = request.post(builder.toUriString());
+        
+        return response;
+    }
+    
+    // Assuming this is a utility method that sets up the base request with headers, authentication, etc.
+    private static RequestSpecification buildBaseRequest(String baseUrl) {
+        return new RequestSpecBuilder().setBaseUri(baseUrl)
+                .addHeader("Content-Type", "application/json")
+                .build();
+    }
+}
