@@ -1,0 +1,78 @@
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class ApiService {
+
+    // Generic method to build a request with path parameters
+    public static RequestSpecification buildRequest(String baseUrl, Map<String, String> pathParams) {
+        RequestSpecification request = RestAssured.given().baseUri(baseUrl);
+        if (pathParams != null) {
+            for (Map.Entry<String, String> entry : pathParams.entrySet()) {
+                request.pathParam(entry.getKey(), entry.getValue());
+            }
+        }
+        return request;
+    }
+
+    // Generic method to perform a GET request
+    public static Response performGetRequest(String baseUrl, String endpoint, Map<String, String> pathParams) {
+        RequestSpecification request = buildRequest(baseUrl, pathParams);
+        Response response = request.get(endpoint);
+        System.out.println("GET Response: " + response.asPrettyString());
+        return response;
+    }
+
+    // Generic method to perform a POST request with a JSON body
+    public static Response performPostRequest(String baseUrl, String endpoint, Map<String, String> pathParams, String jsonFilePath) throws Exception {
+        RequestSpecification request = buildRequest(baseUrl, pathParams);
+        
+        // Reading JSON file content as string
+        File jsonFile = new File(jsonFilePath);
+        InputStream inputStream = new FileInputStream(jsonFile);
+        String jsonText = IOUtils.toString(inputStream, "UTF-8");
+        request.body(jsonText);
+
+        Response response = request.post(endpoint);
+        System.out.println("POST Response Status Code: " + response.getStatusCode());
+        System.out.println("POST Response: " + response.asPrettyString());
+        return response;
+    }
+
+    // Generic method to assert the status code of the response
+    public static void assertStatusCode(Response response, int expectedStatusCode) {
+        Assert.assertEquals(expectedStatusCode, response.getStatusCode());
+    }
+
+    // Example usage in a JUnit test
+    public static void main(String[] args) throws Exception {
+        // Example of GET request
+        Map<String, String> getPathParams = new LinkedHashMap<>();
+        getPathParams.put("eonId", "sampleEonId");
+
+        String getBaseUrl = "https://api.example.com";
+        String getEndpoint = "/service/{eonId}/usage";
+        
+        Response getResponse = performGetRequest(getBaseUrl, getEndpoint, getPathParams);
+        assertStatusCode(getResponse, 200);
+
+        // Example of POST request
+        Map<String, String> postPathParams = new LinkedHashMap<>();
+        postPathParams.put("eonId", "sampleEonId");
+
+        String postBaseUrl = "https://api.example.com";
+        String postEndpoint = "/service/{eonId}/upload";
+        String jsonFilePath = "path/to/your/jsonfile.json";
+
+        Response postResponse = performPostRequest(postBaseUrl, postEndpoint, postPathParams, jsonFilePath);
+        assertStatusCode(postResponse, 200);
+    }
+}
