@@ -1,0 +1,74 @@
+package com.qmetry.qaf.example.test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
+
+public class JsonItemCounter_New {
+
+    public static void main(String[] args) {
+        try {
+            // Path to the JSON file
+            File jsonFile = new File("test.json");
+
+            // Parse the JSON file
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(jsonFile);
+
+            // Traverse and count items within "datasets"
+            JsonNode datasetsNode = rootNode.get("datasets");
+            if (datasetsNode != null && datasetsNode.isArray()) {
+                for (JsonNode dataset : datasetsNode) {
+                    System.out.println("Dataset Name: " + dataset.get("name").asText());
+
+                    countItems(dataset, "reports");
+//                    countItems(dataset, "boundaries");
+//                    countItems(dataset, "dgcDataDomains");
+//                    countItems(dataset, "datasetElements");
+//                    countItems(dataset, "upstreamDatasets");
+                    countItems(dataset, "name");
+//                    countItems(dataset, "format");
+                    countItems(dataset, "description");
+ 
+                
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to count items in a given field
+    private static void countItems(JsonNode dataset, String fieldName) {
+        JsonNode fieldNode = dataset.get(fieldName);
+
+        if (fieldNode != null) {
+            if (fieldNode.isArray()) {
+                System.out.println(fieldName + ": " + fieldNode.size() + " items");
+            } else if (fieldNode.isObject()) {
+                int count = countObjectFields(fieldNode);
+                System.out.println(fieldName + ": " + count + " items");
+            } else {
+                System.out.println(fieldName + ": 1 item");
+            }
+        } else {
+            System.out.println(fieldName + ": No items found");
+        }
+    }
+
+    // Method to count the number of fields in a JSON object
+    private static int countObjectFields(JsonNode objectNode) {
+        Iterator<Map.Entry<String, JsonNode>> fields = objectNode.fields();
+        int count = 0;
+        while (fields.hasNext()) {
+            fields.next();
+            count++;
+        }
+        return count;
+    }
+}
