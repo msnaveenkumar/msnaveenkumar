@@ -1,0 +1,125 @@
+Adding the `getNestedFieldCount` examples you provided into the `JsonUtils` class. This will show how to use these methods to count different fields in the JSON structure.
+
+```java
+package com.qmetry.qaf.example.test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Utility class for handling JSON operations such as counting fields,
+ * comparing JSON values with UI values, and extracting nested fields.
+ */
+public class JsonUtils {
+
+    public static void main(String[] args) {
+        // Example JSON response string
+        String jsonResponse = "{ \"datasets\": [{"
+                + "\"name\": \"Test Automation_Dataset_01\","
+                + "\"format\": \"Protobuf\","
+                + "\"reports\": [{ \"catalogId\": \"82fed24e-053d-4023-a505-0b2e4ad8b26f\" },"
+                + "{ \"catalogId\": \"2c779268-c730-40db-9cfc-6a8d79892a43\" }],"
+                + "\"boundaries\": { \"geography\": \"Boundary Geography | Undefined\","
+                + "\"Product\": \"(Finance) Asset-Backed Securities\","
+                + "\"process\": \"3rd Party Management (TDR: L2 BP0001135)\" },"
+                + "\"description\": \"Testing Datasets in SDH\","
+                + "\"dgcDataDomains\": { \"Global DGC Glossary\": [{ \"domainName\": \"Financial Performance & Analytics Data\" }] },"
+                + "\"datasetElements\": [{ \"name\": \"SDH Autoamation_DatasetElement_01\","
+                + "\"description\": \"Testing Datasets in SDH\","
+                + "\"reportAttributes\": [{ \"catalogId\": \"68839111-045e-4634-b79e-d686638c057c\" },"
+                + "{ \"catalogId\": \"87bb7fd3-6116-4945-8ec1-b8a64d1ca7cc\" }],"
+                + "\"systemDataElements\": [{ \"name\": \"SDH_SDE_Automation_02\","
+                + "\"systemKey\": \"2f05ebf2-2b4f-49bd-82e2-0c5bff134073\" },"
+                + "{ \"name\": \"SDH_SDE_Automation_01\","
+                + "\"systemKey\": \"ee7eae54-393d-4f6d-a9ad-e6e8f92894a1\" }] }],"
+                + "\"upstreamDatasets\": [{ \"name\": \"DS_1503_932\","
+                + "\"producerEonId\": 932 },"
+                + "{ \"name\": \"40761_DS2\","
+                + "\"producerEonId\": 932 },"
+                + "{ \"name\": \"choir_ccar_constant_xva_crv_feed.gz\","
+                + "\"producerEonId\": 932 },"
+                + "{ \"name\": \"DS_1503_932\","
+                + "\"producerEonId\": 932 }],"
+                + "\"systemDataElements\": [{ \"name\": \"SDH_SDE_Automation_02\","
+                + "\"systemKey\": \"2f05ebf2-2b4f-49bd-82e2-0c5bff134073\" },"
+                + "{ \"name\": \"SDH_SDE_Automation_01\","
+                + "\"systemKey\": \"ee7eae54-393d-4f6d-a9ad-e6e8f92894a1\" }] }] }";
+
+        // Example usage of counting fields
+        int geographyCount = getNestedFieldCount(jsonResponse, "boundaries", "geography");
+        int datasetElementsNameCount = getNestedFieldCount(jsonResponse, "datasetElements", "name");
+        int upstreamDatasetsNameCount = getNestedFieldCount(jsonResponse, "upstreamDatasets", "name");
+        int upstreamDatasetsProducerEonIdCount = getNestedFieldCount(jsonResponse, "upstreamDatasets", "producerEonId");
+
+        System.out.println("Geography Count in Boundaries: " + geographyCount); // Expected: 1
+        System.out.println("Dataset Elements Name Count: " + datasetElementsNameCount); // Expected: 1
+        System.out.println("Upstream Datasets Name Count: " + upstreamDatasetsNameCount); // Expected: 4
+        System.out.println("Upstream Datasets ProducerEonId Count: " + upstreamDatasetsProducerEonIdCount); // Expected: 4
+
+        // Additional examples
+        int datasetCount = getNestedFieldCount(jsonResponse, "datasets", null);
+        int reportsCount = getNestedFieldCount(jsonResponse, "reports", null);
+        int systemKeyCount = getNestedFieldCount(jsonResponse, "systemKey", "systemDataElements");
+
+        System.out.println("Datasets Count: " + datasetCount);  // Expected: 1
+        System.out.println("Reports Count: " + reportsCount);   // Expected: 2
+        System.out.println("SystemKey Count in SystemDataElements: " + systemKeyCount); // Expected: 2
+    }
+
+    // Other methods remain the same...
+    
+    /**
+     * Counts the occurrences of a field within a nested node.
+     * Useful when the field is within an array or object nested inside another field.
+     *
+     * @param rootNode The root JsonNode of the JSON.
+     * @param fieldName The field name to count.
+     * @param nestedNodeName The name of the nested node to search within.
+     * @return The count of occurrences within the nested node.
+     */
+    private static int countItemsNested(JsonNode rootNode, String fieldName, String nestedNodeName) {
+        JsonNode nestedNode = rootNode.get(nestedNodeName);
+        if (nestedNode != null && nestedNode.isArray()) {
+            int count = 0;
+            for (JsonNode item : nestedNode) {
+                count += countFieldOccurrences(item, fieldName);
+            }
+            return count;
+        }
+        return 0;
+    }
+
+    /**
+     * Recursively counts occurrences of a specific field in a JsonNode.
+     * Useful for searching nested JSON structures.
+     *
+     * @param node The JsonNode to search.
+     * @param fieldName The field name to count.
+     * @return The count of occurrences of the field.
+     */
+    private static int countFieldOccurrences(JsonNode node, String fieldName) {
+        int count = 0;
+
+        if (node.has(fieldName)) {
+            count++;
+        }
+
+        for (Iterator<Map.Entry<String, JsonNode>> it = node.fields(); it.hasNext(); ) {
+            Map.Entry<String, JsonNode> field = it.next();
+            JsonNode childNode = field.getValue();
+
+            if (childNode.isObject() || childNode.isArray()) {
+                count += countFieldOccurrences(childNode, fieldName);
+            }
+        }
+
+        return count;
+    }
+
+    // Rest of the class remains unchanged...
+}
