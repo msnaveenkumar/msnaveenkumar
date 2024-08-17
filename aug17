@@ -1,0 +1,105 @@
+package com.qmetry.qaf.example.test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Iterator;
+import java.util.Map;
+
+public class Final2 {
+
+    public static void main(String[] args) {
+        // Example JSON response string
+        String jsonResponse = "{ \"datasets\": [{ \"name\": \"Test Automation_Dataset_01\", \"format\": \"Protobuf\", \"reports\": [{ \"catalogId\": \"82fed24e-053d-4023-a505-0b2e4ad8b26f\" }, { \"catalogId\": \"2c779268-c730-40db-9cfc-6a8d79892a43\" }], \"boundaries\": { \"geography\": \"Boundary Geography | Undefined\", \"Product\": \"(Finance) Asset-Backed Securities\", \"process\": \"3rd Party Management (TDR: L2 BP0001135)\" }, \"description\": \"Testing Datasets in SDH\", \"dgcDataDomains\": { \"Global DGC Glossary\": [{ \"domainName\": \"Financial Performance & Analytics Data\" }] }, \"datasetElements\": [{ \"name\": \"SDH Autoamation_DatasetElement_01\", \"description\": \"Testing Datasets in SDH\", \"reportAttributes\": [{ \"catalogId\": \"68839111-045e-4634-b79e-d686638c057c\" }, { \"catalogId\": \"87bb7fd3-6116-4945-8ec1-b8a64d1ca7cc\" }], \"systemDataElements\": [{ \"name\": \"SDH_SDE_Automation_02\", \"systemKey\": \"2f05ebf2-2b4f-49bd-82e2-0c5bff134073\" }, { \"name\": \"SDH_SDE_Automation_01\", \"systemKey\": \"ee7eae54-393d-4f6d-a9ad-e6e8f92894a1\" }] }], \"upstreamDatasets\": [{ \"name\": \"DS_1503_932\", \"producerEonId\": 932 }, { \"name\": \"40761_DS2\", \"producerEonId\": 932 }, { \"name\": \"choir_ccar_constant_xva_crv_feed.gz\", \"producerEonId\": 932 }, { \"name\": \"DS_1503_932\", \"producerEonId\": 932 }], \"systemDataElements\": [{ \"name\": \"SDH_SDE_Automation_02\", \"systemKey\": \"2f05ebf2-2b4f-49bd-82e2-0c5bff134073\" }, { \"name\": \"SDH_SDE_Automation_01\", \"systemKey\": \"ee7eae54-393d-4f6d-a9ad-e6e8f92894a1\" }] }] }";
+
+        // Example of how to use the methods
+        int systemKeyCount = getNestedFieldCount(jsonResponse, "systemDataElements", "systemKey");
+
+        System.out.println("SystemKey Count in SystemDataElements: " + systemKeyCount);
+    }
+
+    public static int getNestedFieldCount(String jsonResponse, String parentField, String nestedField) {
+        JsonNode rootNode = parseJson(jsonResponse);
+
+        if (rootNode != null) {
+            return countItemsNested(rootNode, nestedField, parentField);
+        } else {
+            return 0;
+        }
+    }
+
+    private static JsonNode parseJson(String jsonResponse) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readTree(jsonResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Method to count items of a specific field within nested nodes
+    public static int countItemsNested(JsonNode rootNode, String fieldName, String nestedNodeName) {
+        JsonNode nestedNode = findNode(rootNode, nestedNodeName);
+        if (nestedNode != null) {
+            return countFieldOccurrences(nestedNode, fieldName);
+        }
+        return 0;
+    }
+
+    // Method to find a node by name
+    private static JsonNode findNode(JsonNode node, String nodeName) {
+        if (node == null) {
+            return null;
+        }
+
+        if (node.isArray()) {
+            for (JsonNode item : node) {
+                JsonNode foundNode = findNode(item, nodeName);
+                if (foundNode != null) {
+                    return foundNode;
+                }
+            }
+        } else if (node.isObject()) {
+            if (node.has(nodeName)) {
+                return node.get(nodeName);
+            }
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                JsonNode foundNode = findNode(field.getValue(), nodeName);
+                if (foundNode != null) {
+                    return foundNode;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // Method to count occurrences of a specific field in a JSON node
+    private static int countFieldOccurrences(JsonNode node, String fieldName) {
+        if (node == null) {
+            return 0;
+        }
+
+        int count = 0;
+
+        if (node.isArray()) {
+            for (JsonNode item : node) {
+                count += countFieldOccurrences(item, fieldName);
+            }
+        } else if (node.isObject()) {
+            if (node.has(fieldName)) {
+                count += 1;  // Field found, count it
+            }
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                count += countFieldOccurrences(field.getValue(), fieldName);
+            }
+        }
+
+        return count;
+    }
+}
