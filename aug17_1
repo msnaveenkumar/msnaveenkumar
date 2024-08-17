@@ -1,0 +1,98 @@
+package com.qmetry.qaf.example.test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Iterator;
+import java.util.Map;
+
+public class Final2 {
+
+    public static void main(String[] args) {
+        // Example JSON response string
+        String jsonResponse = "{ \"datasets\": [{ \"name\": \"Dataset1\" }, { \"name\": \"Dataset2\" }], \"reports\": [{ \"reportId\": 1 }, { \"reportId\": 2 }], " +
+                "\"datasetElements\": [{ \"name\": \"Element1\", \"systemDataElements\": [{ \"systemKey\": \"Key1\" }, { \"systemKey\": \"Key2\" }] }] }";
+
+        // Example of how to use the methods
+        int datasetCount = getNestedFieldCount(jsonResponse, "datasets", null);
+        int reportsCount = getNestedFieldCount(jsonResponse, "reports", null);
+        int systemKeyCount = getNestedFieldCount(jsonResponse, "systemKey", "systemDataElements");
+        
+        System.out.println("Datasets Count: " + datasetCount);  // Expected: 2
+        System.out.println("Reports Count: " + reportsCount);   // Expected: 2
+        System.out.println("SystemKey Count in SystemDataElements: " + systemKeyCount); // Expected: 2
+    }
+
+    // Method to get the count of a field, with optional nested field handling
+    public static int getNestedFieldCount(String jsonResponse, String fieldName, String nestedNodeName) {
+        JsonNode rootNode = parseJson(jsonResponse);
+
+        if (rootNode != null) {
+            if (nestedNodeName != null && !nestedNodeName.isEmpty()) {
+                return countItemsNested(rootNode, fieldName, nestedNodeName);
+            } else {
+                return countItems(rootNode, fieldName);
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    // Method to parse the JSON response
+    private static JsonNode parseJson(String jsonResponse) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readTree(jsonResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Method to count items in a given field
+    private static int countItems(JsonNode node, String fieldName) {
+        if (node.has(fieldName) && node.get(fieldName).isArray()) {
+            return node.get(fieldName).size(); // Return the size of the array directly
+        }
+        return 0;
+    }
+
+    // Method to count occurrences of a specific field in a JSON node
+    private static int countFieldOccurrences(JsonNode node, String fieldName) {
+        if (node == null) {
+            return 0;
+        }
+
+        int count = 0;
+
+        if (node.isArray()) {
+            for (JsonNode item : node) {
+                count += countFieldOccurrences(item, fieldName);
+            }
+        } else if (node.isObject()) {
+            if (node.has(fieldName)) {
+                count += 1;  // Field found, count it
+            }
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                count += countFieldOccurrences(field.getValue(), fieldName);
+            }
+        }
+
+        return count;
+    }
+
+    // Method to count items of a specific field within nested nodes
+    private static int countItemsNested(JsonNode rootNode, String fieldName, String nestedNodeName) {
+        JsonNode nestedNode = rootNode.get(nestedNodeName);
+        if (nestedNode != null && nestedNode.isArray()) {
+            int count = 0;
+            for (JsonNode item : nestedNode) {
+                count += countFieldOccurrences(item, fieldName);
+            }
+            return count;
+        }
+        return 0;
+    }
+}
