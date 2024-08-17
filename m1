@@ -1,0 +1,15 @@
+private static int countItemsNested(JsonNode rootNode, String fieldName, String nestedNodeName) {
+    JsonNode nestedNode = rootNode.get(nestedNodeName);
+    if (nestedNode != null) {
+        if (nestedNode.isArray()) {
+            int count = 0;
+            for (JsonNode item : nestedNode) {
+                count += countFieldOccurrences(item, fieldName);
+            }
+            return count;
+        } else if (nestedNode.isObject()) {
+            return countFieldOccurrences(nestedNode, fieldName);
+        }
+    }
+    return 0;
+}
