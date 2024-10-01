@@ -1,0 +1,157 @@
+The error in your screenshot suggests a problem with Kerberos authentication during an HTTP request to the URL. The GSSException: Failure unspecified at GSS-API level and JNI ERROR(lib/kerberos_jni/common/jni_common.c:187) indicate that the target service (likely using Kerberos) is unreachable or misconfigured.
+
+Here’s a breakdown of the problem and how you can resolve it, along with a modified Java solution.
+
+Possible Causes of the Error:
+
+1. Kerberos Configuration Issue: The target Kerberos service (mentioned as loginidp-prod.ms.com) is either misconfigured or unreachable from your system. This could be due to network issues or Kerberos realm configuration problems.
+
+
+2. Authentication Problems: The credentials passed (or the Kerberos ticket) may not be valid for the specified service.
+
+
+3. Native Library Issues: There might be a problem with the Kerberos native library (lib/kerberos_jni), which is trying to perform the handshake but fails at the JNI (Java Native Interface) level.
+
+
+
+Possible Solutions:
+
+1. Verify Network Reachability: Ensure that the target service (loginidp-prod.ms.com) is reachable from your machine by testing it using tools like ping or telnet.
+
+
+2. Kerberos Ticket: Ensure that you have a valid Kerberos ticket (you can check this using klist on Unix-like systems).
+
+If you don't have a valid ticket, get one using kinit.
+
+
+
+3. Check Kerberos Configuration (krb5.conf): Ensure that your Kerberos configuration is correct. The configuration file should define the correct realm and KDC (Key Distribution Center) for your target service.
+
+
+4. Use SPNEGO Authentication in Code: If the service requires Kerberos authentication, use SPNEGO (Simple and Protected GSSAPI Negotiation Mechanism) to authenticate properly in Java.
+
+
+
+Alternative Solution with SPNEGO Authentication
+
+Here’s how you can modify your Java program to use Kerberos authentication with SPNEGO:
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import javax.security.auth.Subject;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
+import com.sun.security.auth.callback.TextCallbackHandler;
+
+public class CheckBrokenLinksWithKerberos {
+
+    public static void main(String[] args) throws Exception {
+        // Set the path to the ChromeDriver
+        System.setProperty("webdriver.chrome.driver", "path_to_chromedriver");
+
+        WebDriver driver = new ChromeDriver();
+        driver.get("https://your-application-url");
+
+        // Perform Kerberos login
+        LoginContext lc = performKerberosLogin();
+
+        // Find all links on the page
+        List<WebElement> links = driver.findElements(By.tagName("a"));
+
+        // Iterate through each link
+        for (WebElement link : links) {
+            String url = link.getAttribute("href");
+            if (url != null && !url.isEmpty()) {
+                try {
+                    // Check the link with Kerberos authentication
+                    checkLinkWithKerberos(lc, url);
+                } catch (Exception e) {
+                    System.out.println("Error checking URL: " + url + " -> " + e.getMessage());
+                }
+            } else {
+                System.out.println("Link is empty or not available: " + link.getText());
+            }
+        }
+
+        // Close the browser
+        driver.quit();
+    }
+
+    public static LoginContext performKerberosLogin() throws LoginException {
+        // Perform a Kerberos login using the configured login.conf
+        LoginContext lc = new LoginContext("KerberosLogin", new TextCallbackHandler());
+        lc.login(); // Obtain Kerberos ticket
+        return lc;
+    }
+
+    public static void checkLinkWithKerberos(LoginContext lc, String linkUrl) {
+        Subject.doAs(lc.getSubject(), (java.security.PrivilegedAction<Void>) () -> {
+            try {
+                URL url = new URL(linkUrl);
+                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+
+                // Enable Kerberos/SPNEGO Authentication
+                Map<String, List<String>> headers = httpURLConnection.getRequestProperties();
+                System.out.println("Response Headers: " + headers);
+
+                int responseCode = httpURLConnection.getResponseCode();
+                if (responseCode >= 400) {
+                    System.out.println(linkUrl + " -> Broken link, Response Code: " + responseCode);
+                } else {
+                    System.out.println(linkUrl + " -> Valid link, Response Code: " + responseCode);
+                }
+
+            } catch (IOException e) {
+                System.out.println(linkUrl + " -> Error: " + e.getMessage());
+            }
+            return null;
+        });
+    }
+}
+
+Key Changes:
+
+1. Kerberos Authentication:
+
+The performKerberosLogin method uses LoginContext to perform a Kerberos login and obtain the necessary tickets.
+
+You must have a login.conf file correctly configured to handle the Kerberos login (similar to how you would configure krb5.conf).
+
+
+
+2. SPNEGO Authentication in checkLinkWithKerberos:
+
+The URL connection uses the Subject.doAs method to perform the request under the Kerberos subject.
+
+This ensures that the Kerberos credentials are applied during the request.
+
+
+
+3. Handling Headers and Response Codes:
+
+After opening the connection, we can inspect the headers to ensure that the proper authentication handshake is taking place.
+
+The response code tells us if the link is broken (400+) or working (200).
+
+
+
+
+Additional Considerations:
+
+Native Libraries: If you encounter issues with native Kerberos libraries (like the JNI error), ensure that the native libraries are correctly installed and accessible.
+
+Debugging: Enable debugging for Kerberos by adding -Dsun.security.krb5.debug=true and -Djava.security.debug=gssloginconfig,configfile,configparser to your Java command-line arguments. This will give you detailed logs about the Kerberos authentication process.
+
+
+Conclusion:
+
+This solution leverages Kerberos authentication in Java to check for broken links that require authentication. It should resolve the issue seen in the screenshot by properly authenticating against the Kerberos-secured service. If the problem persists, ensure that your Kerberos setup (like the configuration of krb5.conf and native libraries) is correct.
+
